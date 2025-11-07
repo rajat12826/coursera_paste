@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Remove Paragraphs — Tool (Improved Matching)</title>
+  <style>
+    :root{--bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#60a5fa;color-scheme: dark;}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{background:linear-gradient(180deg,#071028 0%, #071a2b 100%); padding:28px; color:#e6eef8;}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);min-height:220px;}
+    h1{font-size:20px;margin:0 0 10px 0}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    textarea{width:100%;min-height:220px;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:8px;color:inherit;resize:vertical;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace;}
+    .controls{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    button{background:var(--accent);border:none;padding:10px 14px;border-radius:10px;color:#042233;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+    .full-width{grid-column:1 / -1}
+    .stats{margin-top:10px;font-size:13px;color:var(--muted)}
+    .row{display:flex;gap:8px}
+    .copy-btn{background:linear-gradient(90deg,#34d399,#60a5fa);color:#002029}
+    @media (max-width:900px){.wrap{grid-template-columns:1fr;}}
+    .options{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div style="max-width:1100px;margin:0 auto;">
+    <h1>Remove Paragraphs — Improved matching</h1>
+    <p class="small">Tool normalizes whitespace (collapses newlines/spaces) before matching. You can enable "Partial match" so an entered line will remove any paragraph that contains that text after normalization.</p>
+
+    <div class="wrap" style="margin-top:14px;">
+      <div class="card">
+        <label for="inputText">Input Text</label>
+        <textarea id="inputText" placeholder="Paste your large text here..."></textarea>
+
+        <div class="controls">
+          <button id="pasteSample" class="ghost">Paste sample text</button>
+          <button id="clearInput" class="ghost">Clear</button>
+          <div style="margin-left:auto" class="small">Paragraphs split by blank lines.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label for="toRemove">Paragraphs to remove (one per line)</label>
+        <textarea id="toRemove" placeholder="Write each paragraph you want removed on its own line."></textarea>
+
+        <div class="options">
+          <label class="small" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="caseInsensitive" checked /> Case-insensitive
+          </label>
+          <label class="small" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="normalizeWhitespace" checked /> Normalize whitespace
+          </label>
+          <label class="small" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="partialMatch" checked /> Partial match (contains)
+          </label>
+        </div>
+      </div>
+
+      <div class="card full-width" style="display:flex;flex-direction:column;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="removeBtn">Remove paragraphs</button>
+          <button id="downloadBtn" class="ghost">Download .txt</button>
+          <button id="copyBtn" class="copy-btn">Copy Result</button>
+          <div style="margin-left:auto" class="stats" id="status">Ready.</div>
+        </div>
+
+        <label for="output" style="margin-top:12px">Resulting Text</label>
+        <textarea id="output" readonly placeholder="Result will appear here..."></textarea>
+      </div>
+    </div>
+  </div>
+
+ <script>
+  function splitParas(text) {
+    return text
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .split(/\n\s*\n/)     // split paragraphs even with spaces
+      .map(p => p.trim())
+      .filter(p => p !== "");
+  }
+
+  function normalize(s) {
+    return s.replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  document.getElementById("removeBtn").addEventListener("click", () => {
+    const bigText = document.getElementById("inputText").value;
+    const removeLines = document.getElementById("toRemove").value
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    const paras = splitParas(bigText);
+    const removeNorm = removeLines.map(normalize);
+
+    const filtered = paras.filter(p => {
+      const normP = normalize(p);
+      return !removeNorm.some(r => normP.includes(r)); // partial match
+    });
+
+    document.getElementById("output").value = filtered.join("\n\n");
+  });
+</script>
+
+</body>
+</html>
